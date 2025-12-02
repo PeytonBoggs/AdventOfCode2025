@@ -1,5 +1,3 @@
-import math
-
 input = []
 with open('day1/day1_input.txt', 'r') as file:
     for line in file:
@@ -13,21 +11,6 @@ for line in input:
 
 pointer = 50
 password = 0
-
-"""direction = "R"
-distance = 150
-
-if direction == "L":
-    if pointer - distance <= 0:
-        password += int(abs((pointer - distance) / 100) + 1)
-    pointer -= distance
-else:
-    if distance + pointer >= 100:
-        password += int(abs((distance + pointer) / 100))
-    pointer += distance
-pointer = pointer % 100
-
-print(password)"""
 
 for rotation in rotations:
     initialpointer = pointer
