@@ -26,9 +26,10 @@ for i, box1 in enumerate(junction_boxes):
 # Sort all distances and retain box information
 distances.sort(key=lambda pair: pair[0])
 
-# For the first [num_to_connect] closest box pairs, connect circuits
-num_to_connect = 1000
-for i in range(num_to_connect):
+num_circuits = len(junction_boxes)
+
+# Connect circuits until only 1 remains
+for i in range(len(distances)):
     box1_index = distances[i][1]
     box2_index = distances[i][2]
 
@@ -41,14 +42,9 @@ for i in range(num_to_connect):
         for j in range(len(junction_boxes)):
             if junction_boxes[j][3] == circuit_num_to_be_replaced:
                 junction_boxes[j][3] = circuit_num_to_be_kept
-
-# Count the number of boxes in each circuit
-count = [0] * len(junction_boxes)
-for i in range(len(junction_boxes)):
-    count[junction_boxes[i][3]] += 1
-
-# Find and multiply the three largest circuits
-count.sort(reverse=True)
-multiplied_three_largest = count[0] * count[1] * count[2]
-
-print(multiplied_three_largest)
+        num_circuits -= 1
+        
+        if num_circuits == 1:
+            answer = junction_boxes[box1_index][0] * junction_boxes[box2_index][0] 
+            print(answer)
+            break
