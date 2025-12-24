@@ -1,9 +1,7 @@
 import re
-import math
-from itertools import combinations_with_replacement
-from functools import cache
+import scipy
 
-file = open("day10/sample_input.txt", "r").readlines()
+file = open("day10/input.txt", "r").readlines()
 
 machines = []
 # Process machine
@@ -28,58 +26,27 @@ for line in file:
     machine = [buttons, required_joltages]
     machines.append(machine)
 
+total_presses = 0
 
-# Start with the final joltages, then recursively work down to the base case (all 0s)
-@cache
-def get_combination(joltages, button):
-    if joltages == [0] * len(required_joltages):
-        return button
+# Get the number of buttons presses for each machine
+for machine in machines:
+    # Create button matrix for processing
+    button_matrix = [[0 for _ in range(len(machine[0]))] for _ in range(len(machine[1]))]
+    for i, button in enumerate(machine[0]):
+        for joltage_affected in button:
+            button_matrix[joltage_affected][i] = 1
+
+    # Arrays to be used in optimization
+    buttons = [1 for _ in range(len(machine[0]))]
+    required_joltages = machine[1]
+
+    # Contraint on optization; the pushed buttons mmust equal the required joltages
+    constraint = scipy.optimize.LinearConstraint(A=button_matrix, lb=required_joltages, ub=required_joltages)
+
+    # Optimize the linear algebra problem Ax = b, using constraint, with all entries in x to be integers
+    optimization = scipy.optimize.milp(buttons, integrality=1, constraints=constraint)
     
-    for button in buttons:
-        for toggle in button:
-            joltages[toggle] -= 1
-        return get_combination(joltages, button)
+    numpresses = int(optimization.fun)
+    total_presses += numpresses
 
-def configure(machine):
-    buttons: list[int] = machine[0]
-    required_joltages: list[int] = machine[1]
-
-    # It does not matter in what order the buttons are pressed
-    # So, to see if the joltages are correct, you can:
-    # 1. Append some buttons to a list of buttons pressed
-    # 2. See the number of times each of the toggles occurs in that list
-    # 3. Add up the toggles, compare them against each joltage requirement
-
-    # Brute force checking if some configuration of buttons works, going from none to all
-    print("Buttons:", buttons)
-    print("Required joltages:", required_joltages)
-
-    # At minimum, you need the # buttons * num_pressed = highest joltage
-    # So, you can set the initial num_pressed to ceiling(highest joltage / # buttons)
-    num_pressed = math.ceil(max(required_joltages) / len(buttons))
-
-    while True:
-        # Find all possible combinations of buttons given the number to press
-        # Note: with replacement so that the same button can be pressed multipe times
-        button_combinations = list(combinations_with_replacement(buttons, num_pressed))
-
-        # Test one combination of buttons at a time
-        for combination in button_combinations:
-            # (1) Get a list of toggles
-            joltages = [0] * len(required_joltages)
-            for button in combination:
-                for toggle in button:
-                    joltages[toggle] += 1
-
-            if joltages == required_joltages:
-                print(combination)
-                return num_pressed
-        
-        num_pressed += 1
-
-total_pressed = 0
-for i, machine in enumerate(machines):
-    print("Machine", i, "of", len(machines) - 1)
-    total_pressed += configure(machine)
-
-print(total_pressed)
+print(total_presses)
